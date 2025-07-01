@@ -7,52 +7,23 @@ import (
 )
 
 var (
-	ErrInvalidASCIIValue  = errorc.New("invalid ASCII value")
-	ErrInvalidEBCDICValue = errorc.New("invalid EBCDIC value")
+	ErrUnknownCharacter   = errorc.New("unknown character")
+	ErrUnknownEBCDICCode  = errorc.New("unknown EBCDIC code")
+	ErrInvalidEBCDICInput = errorc.New("invalid EBCDIC input")
 )
 
-var to = map[rune]string{
-	'\u0000': "00", '\u0001': "01", '\u001D': "1D", '\u001F': "1F", ' ': "40", '.': "4B", '<': "4C",
-	'(': "4D", '+': "4E", '|': "4F", '&': "50", '!': "5A", '$': "5B", '*': "5C", ')': "5D",
-	';': "5E", '^': "5F", '-': "60", '/': "61", ',': "6B", '%': "6C", '_': "6D", '>': "6E",
-	'?': "6F", ':': "7A", '#': "7B", '@': "7C", '\'': "7D", '=': "7E", '"': "7F", 'a': "81",
-	'b': "82", 'c': "83", 'd': "84", 'e': "85", 'f': "86", 'g': "87", 'h': "88", 'i': "89",
-	'j': "91", 'k': "92", 'l': "93", 'm': "94", 'n': "95", 'o': "96", 'p': "97", 'q': "98",
-	'r': "99", 's': "A2", 't': "A3", 'u': "A4", 'v': "A5", 'w': "A6", 'x': "A7", 'y': "A8",
-	'z': "A9", 'A': "C1", 'B': "C2", 'C': "C3", 'D': "C4", 'E': "C5", 'F': "C6", 'G': "C7",
-	'H': "C8", 'I': "C9", 'J': "D1", 'K': "D2", 'L': "D3", 'M': "D4", 'N': "D5", 'O': "D6",
-	'P': "D7", 'Q': "D8", 'R': "D9", '\\': "E0", 'S': "E2", 'T': "E3", 'U': "E4", 'V': "E5",
-	'W': "E6", 'X': "E7", 'Y': "E8", 'Z': "E9", '0': "F0", '1': "F1", '2': "F2", '3': "F3",
-	'4': "F4", '5': "F5", '6': "F6", '7': "F7", '8': "F8", '9': "F9",
-}
-
-var from = map[string]byte{
-	"00": '\u0000', "01": '\u0001', "1d": '\u001D', "1D": '\u001D', "1f": '\u001F', "1F": '\u001F',
-	"40": ' ', "4b": '.', "4B": '.', "4c": '<', "4C": '<', "4d": '(', "4D": '(', "4e": '+', "4E": '+',
-	"4f": '|', "4F": '|', "50": '&', "5a": '!', "5A": '!', "5b": '$', "5B": '$', "5c": '*', "5C": '*',
-	"5d": ')', "5D": ')', "5e": ';', "5E": ';', "5f": '^', "5F": '^', "60": '-', "61": '/', "6b": ',',
-	"6B": ',', "6c": '%', "6C": '%', "6d": '_', "6D": '_', "6e": '>', "6E": '>', "6f": '?', "6F": '?',
-	"7a": ':', "7A": ':', "7b": '#', "7B": '#', "7c": '@', "7C": '@', "7d": '\'', "7D": '\'', "7e": '=',
-	"7E": '=', "7f": '"', "7F": '"', "81": 'a', "82": 'b', "83": 'c', "84": 'd', "85": 'e', "86": 'f',
-	"87": 'g', "88": 'h', "89": 'i', "91": 'j', "92": 'k', "93": 'l', "94": 'm', "95": 'n', "96": 'o',
-	"97": 'p', "98": 'q', "99": 'r', "a2": 's', "A2": 's', "a3": 't', "A3": 't', "a4": 'u', "A4": 'u',
-	"a5": 'v', "A5": 'v', "a6": 'w', "A6": 'w', "a7": 'x', "A7": 'x', "a8": 'y', "A8": 'y', "a9": 'z',
-	"A9": 'z', "c1": 'A', "C1": 'A', "c2": 'B', "C2": 'B', "c3": 'C', "C3": 'C', "c4": 'D', "C4": 'D',
-	"c5": 'E', "C5": 'E', "c6": 'F', "C6": 'F', "c7": 'G', "C7": 'G', "c8": 'H', "C8": 'H', "c9": 'I',
-	"C9": 'I', "d1": 'J', "D1": 'J', "d2": 'K', "D2": 'K', "d3": 'L', "D3": 'L', "d4": 'M', "D4": 'M',
-	"d5": 'N', "D5": 'N', "d6": 'O', "D6": 'O', "d7": 'P', "D7": 'P', "d8": 'Q', "D8": 'Q', "d9": 'R',
-	"D9": 'R', "e0": '\\', "E0": '\\', "e2": 'S', "E2": 'S', "e3": 'T', "E3": 'T', "e4": 'U', "E4": 'U',
-	"e5": 'V', "E5": 'V', "e6": 'W', "E6": 'W', "e7": 'X', "E7": 'X', "e8": 'Y', "E8": 'Y', "e9": 'Z',
-	"E9": 'Z', "f0": '0', "F0": '0', "f1": '1', "F1": '1', "f2": '2', "F2": '2', "f3": '3', "F3": '3',
-	"f4": '4', "F4": '4', "f5": '5', "F5": '5', "f6": '6', "F6": '6', "f7": '7', "F7": '7', "f8": '8',
-	"F8": '8', "f9": '9', "F9": '9',
-}
-
-// New creates a new EBCDIC string from the given ASCII string.
-func New(s string) (string, error) {
+// Encode encodes the given text to EBCDIC format using the character set corresponding to the specified code page.
+func Encode(s string, cp ...CodePage) (string, error) {
 	if s == "" {
 		return "", nil
 	}
+
+	c := CodePageInvariant // Invariant character set is used by default.
+	if len(cp) > 0 {
+		c = cp[0]
+	}
+
+	to := getTo(c)
 
 	var b []byte
 
@@ -60,20 +31,19 @@ func New(s string) (string, error) {
 		e, ok := to[r]
 		if !ok {
 			return "", errorc.With(
-				ErrInvalidASCIIValue,
-				errorc.Field("unknown symbol", string(r)),
+				ErrUnknownCharacter,
+				errorc.Field("character", string(r)),
 			)
 		}
 		b = append(b, e...)
 	}
 
 	// At this point, b contains at least two elements.
-
 	return unsafe.String(&b[0], len(b)), nil
 }
 
-// Parse converts a string from EBCDIC to ASCII.
-func Parse(s string) (string, error) {
+// Decode decodes an EBCDIC-encoded text to a string using the character set corresponding to the specified code page.
+func Decode(s string, cp ...CodePage) (string, error) {
 	n := len(s)
 
 	if n == 0 {
@@ -82,20 +52,27 @@ func Parse(s string) (string, error) {
 
 	if n&1 != 0 {
 		return "", errorc.With(
-			ErrInvalidEBCDICValue,
+			ErrInvalidEBCDICInput,
 			errorc.Field("", "input length must be even"),
 			errorc.Field("input", s),
 		)
 	}
 
-	b := make([]byte, 0, n/2)
+	c := CodePageInvariant // Invariant character set is used by default.
+	if len(cp) > 0 {
+		c = cp[0]
+	}
+
+	from := getFrom(c)
+
+	var b []byte
 
 	for i := 0; i < n; i += 2 {
 		a, ok := from[s[i:i+2]]
 		if !ok {
 			return "", errorc.With(
-				ErrInvalidEBCDICValue,
-				errorc.Field("unknown symbol", s[i:i+2]),
+				ErrUnknownEBCDICCode,
+				errorc.Field("code", s[i:i+2]),
 			)
 		}
 

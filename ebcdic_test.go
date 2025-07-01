@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestNew(t *testing.T) {
+func TestEncode(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   string
@@ -27,19 +27,19 @@ func TestNew(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.input)
+			got, err := Encode(tt.input)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("New() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Encode() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want && !tt.wantErr {
-				t.Errorf("New() = %q, want %q", got, tt.want)
+				t.Errorf("Encode() = %q, want %q", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestParse(t *testing.T) {
+func TestDecode(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   string
@@ -63,13 +63,13 @@ func TestParse(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Parse(tt.input)
+			got, err := Decode(tt.input)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Decode() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want && !tt.wantErr {
-				t.Errorf("Parse() = %q, want %q", got, tt.want)
+				t.Errorf("Decode() = %q, want %q", got, tt.want)
 			}
 		})
 	}
