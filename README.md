@@ -29,4 +29,4 @@ Please open an [issue](https://github.com/ygrebnov/ebcdic/issues) or submit a [p
 
 ## License
 
-Distributed under the MIT License. See the [LICENSE](LICENSE) file for details.
+Distributed under the BSD-style license. See the [LICENSE](LICENSE) file for details.

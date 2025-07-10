@@ -1,6 +1,15 @@
+// Copyright 2025 Yaroslav Grebnov. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+// Package ebcdic provides functions to encode and decode text to and from EBCDIC format.
+//
+// EBCDIC format is defined by code pages, which are used to map characters to their EBCDIC representations.
+// By default, the invariant code page is used.
 package ebcdic
 
 import (
+	"strings"
 	"unsafe"
 
 	"github.com/ygrebnov/errorc"
@@ -23,9 +32,13 @@ func Encode(s string, cp ...CodePage) (string, error) {
 		c = cp[0]
 	}
 
-	to := getTo(c)
+	to, err := getTo(c)
+	if err != nil {
+		return "", err
+	}
 
-	var b []byte
+	var b strings.Builder
+	b.Grow(len(s) * 2) // pre-allocate memory
 
 	for _, r := range s {
 		e, ok := to[r]
@@ -35,11 +48,10 @@ func Encode(s string, cp ...CodePage) (string, error) {
 				errorc.Field("character", string(r)),
 			)
 		}
-		b = append(b, e...)
+		b.WriteString(e)
 	}
 
-	// At this point, b contains at least two elements.
-	return unsafe.String(&b[0], len(b)), nil
+	return b.String(), nil
 }
 
 // Decode decodes an EBCDIC-encoded text to a string using the character set corresponding to the specified code page.
@@ -63,9 +75,12 @@ func Decode(s string, cp ...CodePage) (string, error) {
 		c = cp[0]
 	}
 
-	from := getFrom(c)
+	from, err := getFrom(c)
+	if err != nil {
+		return "", err
+	}
 
-	var b []byte
+	b := make([]byte, 0, n/2)
 
 	for i := 0; i < n; i += 2 {
 		a, ok := from[s[i:i+2]]

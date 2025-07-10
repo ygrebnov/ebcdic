@@ -1,5 +1,6 @@
 package ebcdic
 
+// getTo0 returns the mapping for the invariant code page.
 func getTo0() map[rune]string {
 	return map[rune]string{
 		'\u0000': "00", '\u0001': "01", '\u001D': "1D", '\u001F': "1F", ' ': "40", '.': "4B", '<': "4C",
@@ -17,6 +18,7 @@ func getTo0() map[rune]string {
 	}
 }
 
+// getFrom0 returns the mapping for the invariant code page.
 func getFrom0() map[string]byte {
 	return map[string]byte{
 		"00": '\u0000', "01": '\u0001', "1d": '\u001D', "1D": '\u001D', "1f": '\u001F', "1F": '\u001F',
